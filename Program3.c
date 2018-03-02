@@ -11,7 +11,7 @@ int main(){
 	int childExitStatus = -5;
 	
 	while(1){
-		int i = 0;		//Utility var for incrementing
+		int i = 0, j = 0;		//Utility vars for incrementing
 
 		//Get user input
 		char* inptBuffer = NULL;
@@ -24,6 +24,27 @@ int main(){
 		printf(": ");
 		inptLen = getline(&inptBuffer, &bufferSize, stdin);
 		inptBuffer[inptLen-1] = '\0';
+
+		//Replace $$ with PID
+		pid_t myPID = getpid();
+		char myPIDstr[7];
+		int PIDlen;
+		sprintf(myPIDstr, "%d", myPID);
+		PIDlen = strlen(myPIDstr);
+
+		for(i = 0; i < inptLen; i++){
+			if(inptBuffer[i] == '$' && inptBuffer[i+1] == '$'){
+				//Make room for PID in inptBuffer
+				for(j = strlen(inptBuffer)-1; j > i+1; j--){
+					inptBuffer[j+PIDlen-2] = inptBuffer[j];
+				}
+				for(j = 0; j < PIDlen; j++){
+					inptBuffer[i+j] = myPIDstr[j];
+				}
+			}
+		}
+
+		printf("inptBuffer: %s\n", inptBuffer);
 
 		char* inptArgs[512];
 		for(i = 0; i < 512; i++){
@@ -40,16 +61,25 @@ int main(){
 		}
 		numInptArgs = i;
 
+		for(i = 0; i < numInptArgs; i++){
+			printf("%s ", inptArgs[i]);
+		}
+		printf("\n");
 
+		//Exit
 		if(!strcmp("exit", inptArgs[0])){
 			printf("Exiting..\n");
 			exit(0);
 		}
+
+		//cd
 		else if(!strcmp("cd", inptArgs[0])){
-
+			chdir(inptArgs[1]);
 		}
-		else if(!strcmp("status", inptArgs[0])){
 
+		//Status
+		else if(!strcmp("status", inptArgs[0])){
+			
 		}
 		else if(inptArgs[0][0] != '#'){
 			printf("Not a comment..\n");
