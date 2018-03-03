@@ -4,8 +4,22 @@
 #include <sys/types.h>
 #include <string.h>
 #include <fcntl.h>
+#include <signal.h>
+
+
+void catchSIGINT(int signo){
+  char* message = "terminated by signal 2\n";
+  write(STDOUT_FILENO, message, 23);
+}
+
 
 int main(){
+
+	//SIGINT handling
+	struct sigaction SIGINT_action = {0};
+	SIGINT_action.sa_handler = catchSIGINT;
+	sigfillset(&SIGINT_action.sa_mask);
+	sigaction(SIGINT, &SIGINT_action, NULL);
 
 	pid_t spawnpid = -5;
 	int childExitStatus = -5;
@@ -23,9 +37,17 @@ int main(){
 		int inptLen = 0;
 		int numInptArgs = 0;
 
-		printf(": ");
-		inptLen = getline(&inptBuffer, &bufferSize, stdin);
-		inptBuffer[inptLen-1] = '\0';
+		while(1){
+			printf(": ");
+			inptLen = getline(&inptBuffer, &bufferSize, stdin);
+
+			if(inptLen == -1){		//Clear stdin if geline error
+				clearerr(stdin);
+			}
+			else
+				break;
+		}
+		inptBuffer[inptLen-1] = '\0';		//Replace newline char with null terminator
 
 		//Replace $$ with PID
 		pid_t myPID = getpid();
